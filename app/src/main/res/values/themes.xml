@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      Base application theme. This styles the app's window (like the status bar)
+      before Jetpack Compose draws the UI. It uses a Material 3 parent
+      and sets the primary color for consistency with the splash screen.
+    -->
+    <style name="Theme.TTSSTTApp" parent="Theme.Material3.Light.NoActionBar">
+        <!-- Primary brand color. Used for the splash screen background on API 31+. -->
+        <item name="colorPrimary">@color/voice_blue</item>
+    </style>
+</resources>
