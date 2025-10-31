@@ -1,4 +1,4 @@
-package com.example.talkmate.ui.theme.components
+package com.example.talkmate.ui.components
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas

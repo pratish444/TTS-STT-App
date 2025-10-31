@@ -1,4 +1,4 @@
-package com.example.talkmate.ui.theme.components
+package com.example.talkmate.ui.components
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
@@ -10,9 +10,9 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.SmartToy
-import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -54,12 +54,14 @@ fun ChatMessage(
         ) {
             Surface(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(
-                        topStart = if (isUser) 20.dp else 4.dp,
-                        topEnd = if (isUser) 4.dp else 20.dp,
-                        bottomStart = 20.dp,
-                        bottomEnd = 20.dp
-                    ))
+                    .clip(
+                        RoundedCornerShape(
+                            topStart = if (isUser) 20.dp else 4.dp,
+                            topEnd = if (isUser) 4.dp else 20.dp,
+                            bottomStart = 20.dp,
+                            bottomEnd = 20.dp
+                        )
+                    )
                     .widthIn(max = 280.dp),
                 color = if (isUser)
                     MaterialTheme.colorScheme.primary
@@ -88,7 +90,7 @@ fun ChatMessage(
                             modifier = Modifier.size(24.dp)
                         ) {
                             Icon(
-                                imageVector = Icons.Default.VolumeUp,
+                                imageVector = Icons.AutoMirrored.Filled.VolumeUp,
                                 contentDescription = "Speak response",
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.size(16.dp)

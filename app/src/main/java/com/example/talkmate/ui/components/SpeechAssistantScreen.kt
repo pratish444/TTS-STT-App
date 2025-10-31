@@ -1,9 +1,10 @@
-package com.example.ttssttapp.ui.components
+package com.example.talkmate.ui.components
 
 import androidx.compose.animation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.*
@@ -13,9 +14,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.example.talkmate.ui.theme.components.CurrentTextDisplay
-import com.example.talkmate.ui.theme.components.MessageList
-import com.example.talkmate.ui.theme.components.SpeechButton
+import com.example.talkmate.ui.components.CurrentTextDisplay
+import com.example.talkmate.ui.components.MessageList
+import com.example.talkmate.ui.components.SpeechButton
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -117,7 +118,7 @@ fun SpeechAssistantScreen(
                                 modifier = Modifier.height(48.dp)
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.VolumeUp,
+                                    imageVector = Icons.AutoMirrored.Filled.VolumeUp,
                                     contentDescription = null,
                                     modifier = Modifier.size(18.dp)
                                 )
@@ -144,7 +145,7 @@ fun SpeechAssistantScreen(
                                 modifier = Modifier.height(48.dp)
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.VolumeUp,
+                                    imageVector = Icons.AutoMirrored.Filled.VolumeUp,
                                     contentDescription = null,
                                     modifier = Modifier.size(18.dp)
                                 )
