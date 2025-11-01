@@ -5,8 +5,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
+import androidx.compose.material.icons.filled.Camera
 import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -30,6 +30,7 @@ fun SpeechAssistantScreen(
     onStopListening: () -> Unit,
     onSpeakText: (String) -> Unit,
     onClearMessages: () -> Unit,
+    onOpenCamera: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Scaffold(
@@ -37,11 +38,19 @@ fun SpeechAssistantScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Voice Assistant",
+                        text = "Smart Assistant",
                         fontWeight = FontWeight.Bold
                     )
                 },
                 actions = {
+                    // Camera button for OCR
+                    IconButton(onClick = onOpenCamera) {
+                        Icon(
+                            imageVector = Icons.Default.Camera,
+                            contentDescription = "Scan text from image"
+                        )
+                    }
+
                     if (messages.isNotEmpty()) {
                         IconButton(onClick = onClearMessages) {
                             Icon(
@@ -154,6 +163,16 @@ fun SpeechAssistantScreen(
                             }
                         }
                     }
+
+                    // Helper text
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Ask Me",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
                 }
             }
         },
