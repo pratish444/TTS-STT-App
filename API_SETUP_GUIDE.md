@@ -125,7 +125,3 @@ Even without API setup, your assistant is already **very smart**:
 
 ---
 
-**🎉 Your app is now a powerful AI assistant that can answer questions, perform calculations, control
-your device, and scan text from images!**
-
-**Ready to use immediately - no setup required! 🚀**
