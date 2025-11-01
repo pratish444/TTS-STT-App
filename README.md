@@ -1,16 +1,32 @@
-# 🗣️ TTS-STT Voice Assistant
+# 🗣️ TTS-STT Voice Assistant(Work in Progress)
 
 
 A modern **Voice Assistant Android app** built with **Kotlin** and **Jetpack Compose**, supporting both **Speech-to-Text (STT)** and **Text-to-Speech (TTS)** functionality with a sophisticated **Material Design 3** UI.
 
 This app lets users speak into the microphone, transcribes their speech in real-time, generates smart assistant replies, and can read responses aloud using TTS.
 
----
+## 📱 SnapSorts
 
-<h3>📱 App Screenshot</h3>
-<img src="1000089202.jpg" alt="Voice Assistant App" width="250"/>
+<div align="center">
 
----
+<table>
+  <tr>
+    <td align="center" style="padding:10px;">
+      <img src="screensort/front.jpg" alt="Home Screen" width="230" style="border-radius:15px; box-shadow:0 4px 8px rgba(0,0,0,0.2);"/>
+      <br/><b>Home Screen</b>
+    </td>
+    <td align="center" style="padding:10px;">
+      <img src="screensort/ocr1.jpg" alt="OCR Scan Screen" width="230" style="border-radius:15px; box-shadow:0 4px 8px rgba(0,0,0,0.2);"/>
+      <br/><b>OCR Scan Screen</b>
+    </td>
+    <td align="center" style="padding:10px;">
+      <img src="screensort/ocr2.jpg" alt="OCR Result Screen" width="230" style="border-radius:15px; box-shadow:0 4px 8px rgba(0,0,0,0.2);"/>
+      <br/><b>OCR Result Screen</b>
+    </td>
+  </tr>
+</table>
+
+</div>
 
 ## 🚀 Features
 
