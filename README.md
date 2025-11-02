@@ -12,21 +12,26 @@ This app lets users speak into the microphone, transcribes their speech in real-
 <table>
   <tr>
     <td align="center" style="padding:10px;">
-      <img src="screensort/front.jpg" alt="Home Screen" width="230" style="border-radius:15px; box-shadow:0 4px 8px rgba(0,0,0,0.2);"/>
+      <img src="screensort/front.jpg" alt="Home Screen" width="220" style="border-radius:15px; box-shadow:0 4px 8px rgba(0,0,0,0.2);"/>
       <br/><b>Home Screen</b>
     </td>
     <td align="center" style="padding:10px;">
-      <img src="screensort/ocr1.jpg" alt="OCR Scan Screen" width="230" style="border-radius:15px; box-shadow:0 4px 8px rgba(0,0,0,0.2);"/>
+      <img src="screensort/assistantFront.jpeg" alt="Assistant Chat Screen" width="220" style="border-radius:15px; box-shadow:0 4px 8px rgba(0,0,0,0.2);"/>
+      <br/><b>Assistant Chat Screen</b>
+    </td>
+    <td align="center" style="padding:10px;">
+      <img src="screensort/ocr1.jpeg" alt="OCR Scan Screen" width="220" style="border-radius:15px; box-shadow:0 4px 8px rgba(0,0,0,0.2);"/>
       <br/><b>OCR Scan Screen</b>
     </td>
     <td align="center" style="padding:10px;">
-      <img src="screensort/ocr2.jpg" alt="OCR Result Screen" width="230" style="border-radius:15px; box-shadow:0 4px 8px rgba(0,0,0,0.2);"/>
+      <img src="screensort/ocr2.jpeg" alt="OCR Result Screen" width="220" style="border-radius:15px; box-shadow:0 4px 8px rgba(0,0,0,0.2);"/>
       <br/><b>OCR Result Screen</b>
     </td>
   </tr>
 </table>
 
 </div>
+
 
 ## 🚀 Features
 
@@ -37,6 +42,9 @@ This app lets users speak into the microphone, transcribes their speech in real-
 - 📱 **Responsive UI** — Adaptive layouts and animations
 - 🧩 **Clean Architecture** — MVVM with ViewModels + StateFlow
 - 🤖 **Google Assistant-like Commands** — Supports wide range of voice interactions
+-  🕒 **Chat History View** — View and restore previous conversations
+-   📷 **OCR (Optical Character Recognition)** — Scan text from images and read it aloud
+- 🧠 **Smart Responses 2.0** — Contextual replies powered by on-device AI
 
 ---
 
@@ -44,13 +52,9 @@ This app lets users speak into the microphone, transcribes their speech in real-
 
 Exciting features currently under development:
 
-- 📷 **OCR (Optical Character Recognition)** — Scan text from images and read it aloud
-- 🧠 **Smart Responses 2.0** — Contextual replies powered by on-device AI
-- 🌊 **Waveform Visualizer** — Dynamic live speech waveform
-- 🔌 **Offline Mode** — Basic STT/TTS without network access
-- 🎨 **Theme Customization** — Light/Dark/Auto dynamic color support
-- 🕒 **Chat History View** — View and restore previous conversations
 - 🗣️ **Expanded Voice Commands** — New categories (music, notes, reminders, etc.)
+-  🌐 **Multi-Language Support** — Recognize and respond in multiple Indian and global languages
+-  🧾 **Smart OCR Summarization** — Extract and summarize key points from scanned text  
 
 ---
 
@@ -58,10 +62,11 @@ Exciting features currently under development:
 
 - **Language:** Kotlin
 - **UI:** Jetpack Compose + Material 3
-- **APIs:** SpeechRecognizer (STT), TextToSpeech (TTS)
+- **APIs:** SpeechRecognizer (STT), TextToSpeech (TTS) and Gemini AI API  
 - **Architecture:** MVVM + StateFlow
 - **Async:** Kotlin Coroutines
 - **Libraries:** ML Kit (OCR), CameraX (future)
+- **Testing:** JUnit + Android Instrumentation (planned)  
 
 ---
 
@@ -91,7 +96,7 @@ Exciting features currently under development:
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/pratish444/TTS-STT-App
    cd TTS-STT-App
    ```
 
@@ -209,17 +214,6 @@ The app follows **MVVM (Model-View-ViewModel)** architecture:
 ./gradlew test
 ```
 
-### Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Run tests and ensure build passes
-5. Submit a pull request
-
-## License
-
-This project is open source and available under the [MIT License](LICENSE).
 
 ## Support
 
