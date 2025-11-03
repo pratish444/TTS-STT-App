@@ -7,19 +7,26 @@ import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
+import android.speech.tts.UtteranceProgressListener
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.*
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.talkmate.ai.AssistantResponse
+import com.example.talkmate.ai.SmartAssistant
+import com.example.talkmate.ui.components.CameraOCRScreen
 import com.example.talkmate.ui.components.SpeechAssistantScreen
 import com.example.talkmate.ui.theme.TTSSTTAppTheme
+import com.example.talkmate.utils.OCRHelper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import java.util.*
 
 class MainActivity : ComponentActivity() {
@@ -53,17 +60,40 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                SpeechAssistantScreen(
-                    transcribedText = uiState.currentTranscribedText,
-                    assistantResponse = uiState.currentAssistantResponse,
-                    messages = uiState.messages,
-                    isListening = uiState.isListening,
-                    errorMessage = uiState.errorMessage,
-                    onStartListening = viewModel::startListening,
-                    onStopListening = viewModel::stopListening,
-                    onSpeakText = viewModel::speakText,
-                    onClearMessages = viewModel::clearMessages
-                )
+                // Handle system intents from smart assistant
+                LaunchedEffect(uiState.pendingIntent) {
+                    uiState.pendingIntent?.let { intent ->
+                        try {
+                            startActivity(intent)
+                            viewModel.clearPendingIntent()
+                        } catch (e: Exception) {
+                            viewModel.setErrorMessage("Could not perform action: ${e.message}")
+                        }
+                    }
+                }
+
+                if (uiState.showCamera) {
+                    CameraOCRScreen(
+                        onTextExtracted = { extractedText ->
+                            viewModel.processExtractedText(extractedText)
+                        },
+                        onClose = { viewModel.closeCamera() },
+                        onSpeakText = viewModel::speakText
+                    )
+                } else {
+                    SpeechAssistantScreen(
+                        transcribedText = uiState.currentTranscribedText,
+                        assistantResponse = uiState.currentAssistantResponse,
+                        messages = uiState.messages,
+                        isListening = uiState.isListening,
+                        errorMessage = uiState.errorMessage,
+                        onStartListening = viewModel::startListening,
+                        onStopListening = viewModel::stopListening,
+                        onSpeakText = viewModel::speakText,
+                        onClearMessages = viewModel::clearMessages,
+                        onOpenCamera = viewModel::openCamera
+                    )
+                }
             }
         }
     }
@@ -74,8 +104,11 @@ data class MainUiState(
     val currentTranscribedText: String,
     val currentAssistantResponse: String,
     val isListening: Boolean,
+    val isSpeaking: Boolean = false,
     val errorMessage: String,
-    val needsPermission: Boolean
+    val needsPermission: Boolean,
+    val showCamera: Boolean = false,
+    val pendingIntent: Intent? = null
 )
 
 class MainViewModel(private val activity: ComponentActivity) : ViewModel() {
@@ -86,8 +119,11 @@ class MainViewModel(private val activity: ComponentActivity) : ViewModel() {
             currentTranscribedText = "",
             currentAssistantResponse = "",
             isListening = false,
+            isSpeaking = false,
             errorMessage = "",
-            needsPermission = true
+            needsPermission = true,
+            showCamera = false,
+            pendingIntent = null
         )
     )
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
@@ -95,27 +131,104 @@ class MainViewModel(private val activity: ComponentActivity) : ViewModel() {
     private var tts: TextToSpeech? = null
     private var speechRecognizer: SpeechRecognizer? = null
     private var isPermissionGranted = false
+    private var isTtsInitialized = false
+    private val smartAssistant = SmartAssistant(activity)
+    private val ocrHelper = OCRHelper()
 
     fun initializeServices(activity: ComponentActivity) {
-        // Initialize TextToSpeech
-        tts = TextToSpeech(activity, object : TextToSpeech.OnInitListener {
-            override fun onInit(status: Int) {
-                if (status == TextToSpeech.SUCCESS) {
-                    val result = tts?.setLanguage(Locale.getDefault())
-                    if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-                        _uiState.update { it.copy(errorMessage = "Text-to-Speech language not supported.") }
+        // Initialize TextToSpeech with utterance progress listener
+        tts = TextToSpeech(activity) { status ->
+            if (status == TextToSpeech.SUCCESS) {
+                tts?.let { ttsInstance ->
+                    val result = ttsInstance.setLanguage(Locale.getDefault())
+                    if (result == TextToSpeech.LANG_MISSING_DATA ||
+                        result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                        _uiState.update {
+                            it.copy(errorMessage = "Text-to-Speech language not supported.")
+                        }
+                    } else {
+                        isTtsInitialized = true
+                        Log.d("MainActivity", "TTS initialized successfully")
+
+                        // Set utterance progress listener
+                        ttsInstance.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+                            override fun onStart(utteranceId: String?) {
+                                _uiState.update { it.copy(isSpeaking = true) }
+                                Log.d("MainActivity", "TTS started speaking")
+                            }
+
+                            override fun onDone(utteranceId: String?) {
+                                _uiState.update { it.copy(isSpeaking = false) }
+                                Log.d("MainActivity", "TTS finished speaking")
+                            }
+
+                            override fun onError(utteranceId: String?) {
+                                _uiState.update {
+                                    it.copy(
+                                        isSpeaking = false,
+                                        errorMessage = "Speech synthesis failed"
+                                    )
+                                }
+                                Log.e("MainActivity", "TTS error")
+                            }
+                        })
                     }
-                } else {
-                    _uiState.update { it.copy(errorMessage = "Could not initialize Text-to-Speech.") }
+                }
+            } else {
+                _uiState.update {
+                    it.copy(errorMessage = "Could not initialize Text-to-Speech.")
                 }
             }
-        })
+        }
     }
 
     fun setPermissionRequested() {
         isPermissionGranted = true
         setupSpeechRecognizer()
         _uiState.update { it.copy(needsPermission = false) }
+    }
+
+    fun openCamera() {
+        _uiState.update { it.copy(showCamera = true) }
+    }
+
+    fun closeCamera() {
+        _uiState.update { it.copy(showCamera = false) }
+    }
+
+    fun processExtractedText(extractedText: String) {
+        viewModelScope.launch {
+            Log.d("MainActivity", "Processing extracted text: $extractedText")
+
+            // Add the extracted text as a user message
+            _uiState.update {
+                it.copy(
+                    currentTranscribedText = extractedText,
+                    messages = it.messages + listOf("user" to "Text from image: $extractedText"),
+                    showCamera = false
+                )
+            }
+
+            // Process the extracted text with smart assistant
+            val response = smartAssistant.processImageText(extractedText)
+            _uiState.update {
+                it.copy(
+                    currentAssistantResponse = response,
+                    messages = it.messages + listOf("assistant" to response)
+                )
+            }
+
+            // AUTOMATICALLY speak the response
+            speakText(response)
+        }
+    }
+
+    fun setErrorMessage(message: String) {
+        _uiState.update { it.copy(errorMessage = message) }
+    }
+
+    fun clearPendingIntent() {
+        _uiState.update { it.copy(pendingIntent = null) }
     }
 
     private fun setupSpeechRecognizer() {
@@ -126,10 +239,14 @@ class MainViewModel(private val activity: ComponentActivity) : ViewModel() {
                 speechRecognizer?.setRecognitionListener(createRecognitionListener())
                 Log.d("MainActivity", "SpeechRecognizer initialized successfully")
             } else {
-                _uiState.update { it.copy(errorMessage = "Speech recognition is not available on this device.") }
+                _uiState.update {
+                    it.copy(errorMessage = "Speech recognition is not available on this device.")
+                }
             }
         } catch (e: Exception) {
-            _uiState.update { it.copy(errorMessage = "Failed to initialize Speech Recognizer. Try using a physical device instead of emulator.") }
+            _uiState.update {
+                it.copy(errorMessage = "Failed to initialize Speech Recognizer: ${e.message}")
+            }
         }
     }
 
@@ -137,9 +254,12 @@ class MainViewModel(private val activity: ComponentActivity) : ViewModel() {
         return object : RecognitionListener {
             override fun onReadyForSpeech(params: Bundle?) {
                 _uiState.update { it.copy(isListening = true, errorMessage = "") }
+                Log.d("MainActivity", "Ready for speech")
             }
 
-            override fun onBeginningOfSpeech() {}
+            override fun onBeginningOfSpeech() {
+                Log.d("MainActivity", "Speech began")
+            }
 
             override fun onRmsChanged(rmsdB: Float) {}
 
@@ -147,26 +267,24 @@ class MainViewModel(private val activity: ComponentActivity) : ViewModel() {
 
             override fun onEndOfSpeech() {
                 _uiState.update { it.copy(isListening = false) }
+                Log.d("MainActivity", "Speech ended")
             }
 
             override fun onError(error: Int) {
-                _uiState.update {
-                    it.copy(
-                        isListening = false,
-                        errorMessage = when (error) {
-                            SpeechRecognizer.ERROR_AUDIO -> "Audio recording error. Try using a physical device."
-                            SpeechRecognizer.ERROR_CLIENT -> "Client side error. Try restarting the app."
-                            SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> "Microphone permission denied."
-                            SpeechRecognizer.ERROR_NETWORK -> "Network error. Check your internet connection."
-                            SpeechRecognizer.ERROR_NETWORK_TIMEOUT -> "Network timeout. Check your connection."
-                            SpeechRecognizer.ERROR_NO_MATCH -> "I didn't catch that. Please speak clearly and try again."
-                            SpeechRecognizer.ERROR_RECOGNIZER_BUSY -> "Recognition service is busy. Try again in a moment."
-                            SpeechRecognizer.ERROR_SERVER -> "Server error. Try again later."
-                            SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> "No speech detected. Please try speaking again."
-                            else -> "Speech recognition error ($error). Try again."
-                        }
-                    )
+                val errorMsg = when (error) {
+                    SpeechRecognizer.ERROR_AUDIO -> "Audio recording error"
+                    SpeechRecognizer.ERROR_CLIENT -> "Client error"
+                    SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> "Microphone permission denied"
+                    SpeechRecognizer.ERROR_NETWORK -> "Network error"
+                    SpeechRecognizer.ERROR_NETWORK_TIMEOUT -> "Network timeout"
+                    SpeechRecognizer.ERROR_NO_MATCH -> "I didn't catch that. Please try again."
+                    SpeechRecognizer.ERROR_RECOGNIZER_BUSY -> "Recognition service busy"
+                    SpeechRecognizer.ERROR_SERVER -> "Server error"
+                    SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> "No speech detected"
+                    else -> "Speech recognition error ($error)"
                 }
+                _uiState.update { it.copy(isListening = false, errorMessage = errorMsg) }
+                Log.e("MainActivity", "Speech error: $errorMsg")
             }
 
             override fun onResults(results: Bundle?) {
@@ -174,21 +292,20 @@ class MainViewModel(private val activity: ComponentActivity) : ViewModel() {
                 val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                 if (!matches.isNullOrEmpty()) {
                     val userText = matches[0]
-                    val assistantResponse = generateResponse(userText)
+                    Log.d("MainActivity", "Recognized: $userText")
 
-                    _uiState.update {
-                        it.copy(
-                            currentTranscribedText = userText,
-                            currentAssistantResponse = assistantResponse,
-                            messages = it.messages + listOf(
-                                "user" to userText,
-                                "assistant" to assistantResponse
+                    viewModelScope.launch {
+                        val response = smartAssistant.processCommand(userText)
+
+                        _uiState.update {
+                            it.copy(
+                                currentTranscribedText = userText,
+                                messages = it.messages + listOf("user" to userText)
                             )
-                        )
+                        }
+
+                        handleAssistantResponse(response)
                     }
-                    speakText(assistantResponse)
-                } else {
-                    _uiState.update { it.copy(errorMessage = "No speech was recognized. Please try again.") }
                 }
             }
 
@@ -203,34 +320,66 @@ class MainViewModel(private val activity: ComponentActivity) : ViewModel() {
         }
     }
 
+    private fun handleAssistantResponse(response: AssistantResponse) {
+        when (response) {
+            is AssistantResponse.Text -> {
+                _uiState.update {
+                    it.copy(
+                        currentAssistantResponse = response.message,
+                        messages = it.messages + listOf("assistant" to response.message)
+                    )
+                }
+                // AUTOMATICALLY speak the response
+                speakText(response.message)
+            }
+
+            is AssistantResponse.Action -> {
+                _uiState.update {
+                    it.copy(
+                        currentAssistantResponse = response.message,
+                        messages = it.messages + listOf("assistant" to response.message),
+                        pendingIntent = response.intent
+                    )
+                }
+                // AUTOMATICALLY speak the response
+                speakText(response.message)
+            }
+        }
+    }
+
     fun startListening() {
         if (!isPermissionGranted) {
             _uiState.update { it.copy(needsPermission = true) }
             return
         }
 
+        // Stop any ongoing speech before listening
+        if (_uiState.value.isSpeaking) {
+            tts?.stop()
+            _uiState.update { it.copy(isSpeaking = false) }
+        }
+
         if (speechRecognizer == null) {
-            _uiState.update { it.copy(errorMessage = "Speech recognizer not initialized. Try restarting the app.") }
+            _uiState.update {
+                it.copy(errorMessage = "Speech recognizer not initialized. Try restarting.")
+            }
             return
         }
 
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
-            putExtra(RecognizerIntent.EXTRA_PROMPT, "Say something...")
+            putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
             putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
-            putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, activity.packageName)
-            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 3000)
-            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 3000)
-            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, 1000)
         }
 
         try {
             speechRecognizer?.startListening(intent)
-        } catch (e: SecurityException) {
-            _uiState.update { it.copy(errorMessage = "Microphone permission not granted.") }
+            Log.d("MainActivity", "Started listening")
         } catch (e: Exception) {
-            _uiState.update { it.copy(errorMessage = "Failed to start listening: ${e.message}") }
+            _uiState.update {
+                it.copy(errorMessage = "Failed to start listening: ${e.message}")
+            }
         }
     }
 
@@ -239,38 +388,33 @@ class MainViewModel(private val activity: ComponentActivity) : ViewModel() {
         _uiState.update { it.copy(isListening = false) }
     }
 
-    private fun generateResponse(userInput: String): String {
-        val input = userInput.lowercase(Locale.getDefault()).trim()
-        return when {
-            input.contains("hello") || input.contains("hi") || input.contains("hey") ->
-                "Hello there! How can I help you today?"
-            input.contains("time") ->
-                "The current time is ${java.text.SimpleDateFormat("h:mm a", Locale.getDefault()).format(Date())}."
-            input.contains("date") ->
-                "Today is ${java.text.SimpleDateFormat("EEEE, MMMM d, yyyy", Locale.getDefault()).format(Date())}."
-            input.contains("joke") ->
-                "Why did the scarecrow win an award? Because he was outstanding in his field!"
-            input.contains("weather") ->
-                "I can't check the weather right now, but I hope it's nice where you are!"
-            input.contains("thank") ->
-                "You're very welcome! Is there anything else I can help you with?"
-            input.contains("bye") || input.contains("goodbye") ->
-                "Goodbye! Have a great day!"
-            else ->
-                "I heard you say: '$userInput'. How can I help you with that?"
-        }
-    }
-
     fun speakText(text: String) {
-        tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "tts_utterance")
+        if (!isTtsInitialized) {
+            Log.w("MainActivity", "TTS not initialized yet")
+            _uiState.update { it.copy(errorMessage = "Text-to-Speech not ready") }
+            return
+        }
+
+        if (text.isBlank()) {
+            Log.w("MainActivity", "Attempted to speak empty text")
+            return
+        }
+
+        Log.d("MainActivity", "Speaking: $text")
+
+        // Use QUEUE_FLUSH to interrupt any ongoing speech
+        tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "tts_${System.currentTimeMillis()}")
     }
 
     fun clearMessages() {
+        tts?.stop()
         _uiState.update {
             it.copy(
                 messages = emptyList(),
                 currentTranscribedText = "",
-                currentAssistantResponse = ""
+                currentAssistantResponse = "",
+                errorMessage = "",
+                isSpeaking = false
             )
         }
     }
@@ -280,6 +424,6 @@ class MainViewModel(private val activity: ComponentActivity) : ViewModel() {
         tts?.stop()
         tts?.shutdown()
         speechRecognizer?.destroy()
+        ocrHelper.cleanup()
     }
 }
-
