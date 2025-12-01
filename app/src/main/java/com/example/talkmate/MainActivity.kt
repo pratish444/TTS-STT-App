@@ -34,7 +34,6 @@ class MainActivity : ComponentActivity() {
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
-        // Permission result is handled in the viewModel
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -52,7 +51,6 @@ class MainActivity : ComponentActivity() {
 
                 val uiState by viewModel.uiState.collectAsState()
 
-                // Handle permission requests
                 LaunchedEffect(uiState.needsPermission) {
                     if (uiState.needsPermission) {
                         permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
@@ -60,7 +58,6 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                // Handle system intents from smart assistant
                 LaunchedEffect(uiState.pendingIntent) {
                     uiState.pendingIntent?.let { intent ->
                         try {
@@ -136,7 +133,6 @@ class MainViewModel(private val activity: ComponentActivity) : ViewModel() {
     private val ocrHelper = OCRHelper()
 
     fun initializeServices(activity: ComponentActivity) {
-        // Initialize TextToSpeech with utterance progress listener
         tts = TextToSpeech(activity) { status ->
             if (status == TextToSpeech.SUCCESS) {
                 tts?.let { ttsInstance ->
@@ -150,7 +146,6 @@ class MainViewModel(private val activity: ComponentActivity) : ViewModel() {
                         isTtsInitialized = true
                         Log.d("MainActivity", "TTS initialized successfully")
 
-                        // Set utterance progress listener
                         ttsInstance.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
                             override fun onStart(utteranceId: String?) {
                                 _uiState.update { it.copy(isSpeaking = true) }
@@ -200,7 +195,6 @@ class MainViewModel(private val activity: ComponentActivity) : ViewModel() {
         viewModelScope.launch {
             Log.d("MainActivity", "Processing extracted text: $extractedText")
 
-            // Add the extracted text as a user message
             _uiState.update {
                 it.copy(
                     currentTranscribedText = extractedText,
@@ -209,7 +203,6 @@ class MainViewModel(private val activity: ComponentActivity) : ViewModel() {
                 )
             }
 
-            // Process the extracted text with smart assistant
             val response = smartAssistant.processImageText(extractedText)
             _uiState.update {
                 it.copy(
@@ -218,7 +211,6 @@ class MainViewModel(private val activity: ComponentActivity) : ViewModel() {
                 )
             }
 
-            // AUTOMATICALLY speak the response
             speakText(response)
         }
     }
@@ -320,30 +312,25 @@ class MainViewModel(private val activity: ComponentActivity) : ViewModel() {
         }
     }
 
-    private fun handleAssistantResponse(response: AssistantResponse) {
-        when (response) {
-            is AssistantResponse.Text -> {
-                _uiState.update {
-                    it.copy(
-                        currentAssistantResponse = response.message,
-                        messages = it.messages + listOf("assistant" to response.message)
-                    )
-                }
-                // AUTOMATICALLY speak the response
-                speakText(response.message)
-            }
+    private fun handleAssistantResponse(response: AssistantResponse) = when (response) {
+        is AssistantResponse.Text -> {
+            val value = _uiState.update {
+                it.copy(
+                    currentAssistantResponse = response.message,
+                    messages = it.messages + listOf("assistant" to response.message)
+                )
+            }.speakText(response.message)
+        }
 
-            is AssistantResponse.Action -> {
-                _uiState.update {
-                    it.copy(
-                        currentAssistantResponse = response.message,
-                        messages = it.messages + listOf("assistant" to response.message),
-                        pendingIntent = response.intent
-                    )
-                }
-                // AUTOMATICALLY speak the response
-                speakText(response.message)
+        is AssistantResponse.Action -> {
+            _uiState.update {
+                it.copy(
+                    currentAssistantResponse = response.message,
+                    messages = it.messages + listOf("assistant" to response.message),
+                    pendingIntent = response.intent
+                )
             }
+            speakText(response.message)
         }
     }
 
@@ -353,7 +340,6 @@ class MainViewModel(private val activity: ComponentActivity) : ViewModel() {
             return
         }
 
-        // Stop any ongoing speech before listening
         if (_uiState.value.isSpeaking) {
             tts?.stop()
             _uiState.update { it.copy(isSpeaking = false) }
@@ -402,7 +388,6 @@ class MainViewModel(private val activity: ComponentActivity) : ViewModel() {
 
         Log.d("MainActivity", "Speaking: $text")
 
-        // Use QUEUE_FLUSH to interrupt any ongoing speech
         tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "tts_${System.currentTimeMillis()}")
     }
 
@@ -427,3 +412,5 @@ class MainViewModel(private val activity: ComponentActivity) : ViewModel() {
         ocrHelper.cleanup()
     }
 }
+
+private fun Unit.speakText(message: String) {}
