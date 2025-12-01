@@ -11,7 +11,6 @@ import retrofit2.http.Query
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-// Gemini API Data Classes
 data class GeminiRequest(
     @SerializedName("contents") val contents: List<GeminiContent>
 )
@@ -45,8 +44,7 @@ interface GeminiApi {
 
 class GeminiAIService {
 
-    // REPLACE THIS WITH YOUR ACTUAL API KEY from https://aistudio.google.com/app/apikey
-    private val apiKey = "AIzaSyC4KQy5b9av6S65gcz2LmT42igLQ2Oi2pg"
+    private val apiKey = "API KEY"
 
     private val retrofit = Retrofit.Builder()
         .baseUrl("https://generativelanguage.googleapis.com/")
@@ -61,7 +59,6 @@ class GeminiAIService {
                 Log.d("GeminiAI", "Processing question: $userQuestion")
                 Log.d("GeminiAI", "API Key length: ${apiKey.length}")
 
-                // Check if API key is set
                 if (apiKey == "YOUR_API_KEY_HERE" || apiKey.isBlank()) {
                     Log.e("GeminiAI", "API key not set!")
                     return@withContext getSmartLocalResponse(userQuestion)
@@ -132,7 +129,6 @@ class GeminiAIService {
                         }
                     }
 
-                    // For 401/403, don't use fallback - tell user to fix API key
                     if (response.code() == 401 || response.code() == 403) {
                         return@withContext errorMessage
                     }
@@ -143,7 +139,6 @@ class GeminiAIService {
                 Log.e("GeminiAI", "Exception: ${e.message}", e)
                 Log.e("GeminiAI", "Stack trace: ${e.stackTraceToString()}")
 
-                // Fallback to smart local responses
                 return@withContext getSmartLocalResponse(userQuestion)
             }
         }
