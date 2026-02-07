@@ -1,11 +1,11 @@
-# 🗣️ TTS-STT Voice Assistant(Work in Progress)
+#  TTS-STT Voice Assistant
 
 
 A modern **Voice Assistant Android app** built with **Kotlin** and **Jetpack Compose**, supporting both **Speech-to-Text (STT)** and **Text-to-Speech (TTS)** functionality with a sophisticated **Material Design 3** UI.
 
 This app lets users speak into the microphone, transcribes their speech in real-time, generates smart assistant replies, and can read responses aloud using TTS.
 
-## 📱 SnapSorts
+## SnapSorts
 
 <div align="center">
 
@@ -33,32 +33,32 @@ This app lets users speak into the microphone, transcribes their speech in real-
 </div>
 
 
-## 🚀 Features
+##  Features
 
-- 🎤 **Speech-to-Text (STT)** — Converts spoken words into text with real-time partial results
-- 🔊 **Text-to-Speech (TTS)** — Reads out user text or assistant replies with natural voice
-- 🎨 **Modern Material 3 Design** — Built entirely with Jetpack Compose
-- ⚡ **Real-time Processing** — Live transcription feedback
-- 📱 **Responsive UI** — Adaptive layouts and animations
-- 🧩 **Clean Architecture** — MVVM with ViewModels + StateFlow
-- 🤖 **Google Assistant-like Commands** — Supports wide range of voice interactions
--  🕒 **Chat History View** — View and restore previous conversations
--   📷 **OCR (Optical Character Recognition)** — Scan text from images and read it aloud
-- 🧠 **Smart Responses 2.0** — Contextual replies powered by on-device AI
+-  **Speech-to-Text (STT)** — Converts spoken words into text with real-time partial results
+-  **Text-to-Speech (TTS)** — Reads out user text or assistant replies with natural voice
+-  **Modern Material 3 Design** — Built entirely with Jetpack Compose
+-  **Real-time Processing** — Live transcription feedback
+-  **Responsive UI** — Adaptive layouts and animations
+-  **Clean Architecture** — MVVM with ViewModels + StateFlow
+-  **Google Assistant-like Commands** — Supports wide range of voice interactions
+-   **Chat History View** — View and restore previous conversations
+-    **OCR (Optical Character Recognition)** — Scan text from images and read it aloud
+-  **Smart Responses 2.0** — Contextual replies powered by on-device AI
 
 ---
 
-## 🔮 Future Updates
+##  Future Updates
 
 Exciting features currently under development:
 
-- 🗣️ **Expanded Voice Commands** — New categories (music, notes, reminders, etc.)
--  🌐 **Multi-Language Support** — Recognize and respond in multiple Indian and global languages
--  🧾 **Smart OCR Summarization** — Extract and summarize key points from scanned text  
+-  **Expanded Voice Commands** — New categories (music, notes, reminders, etc.)
+-  **Multi-Language Support** — Recognize and respond in multiple Indian and global languages
+-   **Smart OCR Summarization** — Extract and summarize key points from scanned text  
 
 ---
 
-## 🧠 Tech Stack
+##  Tech Stack
 
 - **Language:** Kotlin
 - **UI:** Jetpack Compose + Material 3
@@ -73,7 +73,7 @@ Exciting features currently under development:
 
 ---
 
-## 🔐 Permissions
+##  Permissions
 
 ```xml
 <uses-permission android:name="android.permission.RECORD_AUDIO" />
